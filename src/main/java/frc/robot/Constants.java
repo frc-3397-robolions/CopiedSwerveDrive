@@ -7,6 +7,11 @@
 
 package frc.robot;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.util.Alert;
@@ -24,6 +29,16 @@ import java.util.Map;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
+  public static class VisionConstants {
+    public static final Transform3d robotToCam =
+            new Transform3d(
+                    new Translation3d(0.5, 0.0, 0),
+                    new Rotation3d(
+                            0, 0,
+                            0)); // Cam mounted facing forward, half a meter forward of center, half a meter up
+    // from center.
+    public static final String cameraName = "Forward Camera";
+}
   private static final RobotType robot = RobotType.ROBOT_SIMBOT;
   public static final double loopPeriodSecs = 0.02;
   public static final boolean tuningMode = false;
