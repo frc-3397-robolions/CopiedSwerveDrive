@@ -8,7 +8,11 @@
 package frc.robot.subsystems.drive;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import frc.robot.Constants;
 
@@ -49,6 +53,8 @@ public class ModuleIOSim implements ModuleIO {
     inputs.turnAppliedVolts = turnAppliedVolts;
     inputs.turnCurrentAmps = new double[] {Math.abs(turnSim.getCurrentDrawAmps())};
     inputs.turnTempCelcius = new double[] {};
+
+    inputs.state = new SwerveModulePosition(inputs.drivePositionRad*Units.inchesToMeters(2), Rotation2d.fromRadians(inputs.turnAbsolutePositionRad));
   }
 
   public void setDriveVoltage(double volts) {

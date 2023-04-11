@@ -9,6 +9,7 @@ package frc.robot.subsystems.drive;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -18,6 +19,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -25,6 +27,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.util.GeomUtil;
 import frc.robot.util.LoggedTunableNumber;
+import frc.robot.util.PhotonCameraWrapper;
+
 import java.util.Arrays;
 import org.littletonrobotics.junction.Logger;
 import org.photonvision.PhotonCamera;
@@ -75,6 +79,8 @@ public class Drive extends SubsystemBase {
   private ChassisSpeeds closedLoopSetpoint = new ChassisSpeeds();
   private double characterizationVoltage = 0.0;
 
+  public PhotonCameraWrapper pcw = new PhotonCameraWrapper();
+  private SwerveDrivePoseEstimator m_PoseEstimator;
   /** Creates a new Drive. */
   public Drive(
       GyroIO gyroIO,
@@ -142,6 +148,17 @@ public class Drive extends SubsystemBase {
           new PIDController(turnKp.get(), 0.0, turnKd.get(), Constants.loopPeriodSecs);
       turnFeedback[i].enableContinuousInput(-Math.PI, Math.PI);
     }
+    m_PoseEstimator = new SwerveDrivePoseEstimator(
+      kinematics,
+      Rotation2d.fromRadians(gyroInputs.positionRad),
+      new SwerveModulePosition[] {
+        moduleInputs[0].state,
+        moduleInputs[1].state,
+        moduleInputs[2].state,
+        moduleInputs[3].state
+      },
+      odometryPose
+      ); 
 
     // Calculate max angular speed
     maxAngularSpeed =

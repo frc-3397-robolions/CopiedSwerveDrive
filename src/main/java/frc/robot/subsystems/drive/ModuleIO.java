@@ -9,6 +9,10 @@ package frc.robot.subsystems.drive;
 
 import org.littletonrobotics.junction.AutoLog;
 
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
+
 public interface ModuleIO {
   @AutoLog
   public static class ModuleIOInputs {
@@ -25,6 +29,8 @@ public interface ModuleIO {
     public double turnAppliedVolts = 0.0;
     public double[] turnCurrentAmps = new double[] {};
     public double[] turnTempCelcius = new double[] {};
+
+    public SwerveModulePosition state = new SwerveModulePosition(0, new Rotation2d(0));
   }
 
   /** Updates the set of loggable inputs. */
