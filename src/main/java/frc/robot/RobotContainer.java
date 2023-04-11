@@ -1,49 +1,49 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
+// Copyright (c) 2023 FRC 6328
+// http://github.com/Mechanical-Advantage
+//
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file at
+// the root directory of this project.
 
 package frc.robot;
 
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.Mode;
-import frc.robot.commands.ClimbForFun;
+import frc.robot.commands.BasicAutoDrive;
 import frc.robot.commands.DriveWithJoysticks;
-import frc.robot.commands.FeedForwardCharacterization;
-import frc.robot.commands.FeedForwardCharacterization.FeedForwardCharacterizationData;
-import frc.robot.commands.FiveCargoAuto;
-import frc.robot.commands.RunClimber;
-import frc.robot.commands.ScoreWithForce;
-import frc.robot.commands.SixBallAuto;
-import frc.robot.commands.Taxi;
-import frc.robot.commands.ThreeCargoAuto;
+import frc.robot.commands.SpinCommand;
 import frc.robot.commands.DriveWithJoysticks.JoystickMode;
-import frc.robot.subsystems.climber.Climber;
-import frc.robot.subsystems.climber.ClimberIO;
-import frc.robot.subsystems.climber.ClimberIOTalonSRX;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
-import frc.robot.subsystems.drive.GyroIOPigeon2;
+import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSparkMAX;
 import frc.robot.util.Alert;
 import frc.robot.util.Alert.AlertType;
-import frc.robot.util.GeomUtil;
-import frc.robot.util.SparkMAXBurnManager;
+
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+
+import com.pathplanner.lib.PathPlanner;
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.auto.PIDConstants;
+import com.pathplanner.lib.auto.SwerveAutoBuilder;
+
+import static frc.robot.Constants.*;
+
+import java.util.List;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -53,12 +53,10 @@ import frc.robot.util.SparkMAXBurnManager;
  */
 public class RobotContainer {
 
-  public static final Pose2d autoDriveTarget =
-      new Pose2d(4.0, 2.0, new Rotation2d());
+  public static final Pose2d autoDriveTarget = new Pose2d(4.0, 2.0, new Rotation2d());
 
   // Subsystems
   private Drive drive;
-  private Climber climber;
 
   // OI objects
   private XboxController driverController = new XboxController(0);
@@ -66,7 +64,7 @@ public class RobotContainer {
   private boolean isFieldRelative = true;
 
   // Choosers
-  private final LoggedDashboardChooser<AutoRoutine> autoChooser =
+  private final LoggedDashboardChooser<Command> autoChooser =
       new LoggedDashboardChooser<>("Auto Routine");
   private final LoggedDashboardChooser<JoystickMode> joystickModeChooser =
       new LoggedDashboardChooser<>("Linear Speed Limit");
@@ -77,21 +75,27 @@ public class RobotContainer {
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
-    // Check if flash should be burned
-    SparkMAXBurnManager.update();
 
     // Instantiate active subsystems
     if (Constants.getMode() != Mode.REPLAY) {
       switch (Constants.getRobot()) {
         case ROBOT_2022S:
-          drive = new Drive(new GyroIOPigeon2(), new ModuleIOSparkMAX(0),
-              new ModuleIOSparkMAX(1), new ModuleIOSparkMAX(2),
-              new ModuleIOSparkMAX(3));
-          climber = new Climber(new ClimberIOTalonSRX());
+          drive =
+              new Drive(
+                  new GyroIONavX(),
+                  new ModuleIOSparkMAX(0),
+                  new ModuleIOSparkMAX(1),
+                  new ModuleIOSparkMAX(2),
+                  new ModuleIOSparkMAX(3));
           break;
         case ROBOT_SIMBOT:
-          drive = new Drive(new GyroIO() {}, new ModuleIOSim(),
-              new ModuleIOSim(), new ModuleIOSim(), new ModuleIOSim());
+          drive =
+              new Drive(
+                  new GyroIO() {},
+                  new ModuleIOSim(),
+                  new ModuleIOSim(),
+                  new ModuleIOSim(),
+                  new ModuleIOSim());
           break;
         default:
           break;
@@ -99,50 +103,19 @@ public class RobotContainer {
     }
 
     // Instantiate missing subsystems
-    drive = drive != null ? drive
-        : new Drive(new GyroIO() {}, new ModuleIO() {}, new ModuleIO() {},
-            new ModuleIO() {}, new ModuleIO() {});
-    climber = climber != null ? climber : new Climber(new ClimberIO() {});
+    drive =
+        drive != null
+            ? drive
+            : new Drive(
+                new GyroIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {});
 
     // Set up auto routines
-    autoChooser.addDefaultOption("Do Nothing",
-        new AutoRoutine(AutoPosition.ORIGIN, new InstantCommand()));
-    autoChooser.addOption("Climb For Fun (TB)",
-        new AutoRoutine(AutoPosition.TARMAC_B,
-            new ClimbForFun(drive, climber, AutoPosition.TARMAC_B)));
-    autoChooser.addOption("Climb For Fun (FA*)",
-        new AutoRoutine(AutoPosition.FENDER_A_REVERSED,
-            new ClimbForFun(drive, climber, AutoPosition.FENDER_A_REVERSED)));
-    autoChooser.addOption("Score With Force (FA*)",
-        new AutoRoutine(AutoPosition.FENDER_A_REVERSED,
-            new ScoreWithForce(drive, AutoPosition.FENDER_A_REVERSED)));
-    autoChooser.addOption("Score With Force (FB*)",
-        new AutoRoutine(AutoPosition.FENDER_B_REVERSED,
-            new ScoreWithForce(drive, AutoPosition.FENDER_B_REVERSED)));
-    autoChooser.addOption("Taxi (TA)", new AutoRoutine(AutoPosition.TARMAC_A,
-        new WaitCommand(12.0).andThen(new Taxi(drive, false))));
-    autoChooser.addOption("Taxi (TB)", new AutoRoutine(AutoPosition.TARMAC_B,
-        new WaitCommand(12.0).andThen(new Taxi(drive, false))));
-    autoChooser.addOption("Taxi (TC)", new AutoRoutine(AutoPosition.TARMAC_C,
-        new WaitCommand(12.0).andThen(new Taxi(drive, false))));
-    autoChooser.addOption("Taxi (TD)", new AutoRoutine(AutoPosition.TARMAC_D,
-        new WaitCommand(12.0).andThen(new Taxi(drive, false))));
-    autoChooser.addOption("Taxi (FA)", new AutoRoutine(AutoPosition.FENDER_A,
-        new WaitCommand(12.0).andThen(new Taxi(drive, true))));
-    autoChooser.addOption("Taxi (FB)", new AutoRoutine(AutoPosition.FENDER_B,
-        new WaitCommand(12.0).andThen(new Taxi(drive, true))));
-    autoChooser.addOption("Drive Characterization",
-        new AutoRoutine(AutoPosition.ORIGIN,
-            new FeedForwardCharacterization(drive, true,
-                new FeedForwardCharacterizationData("drive"),
-                drive::runCharacterizationVolts,
-                drive::getCharacterizationVelocity)));
-    autoChooser.addOption("Three Cargo",
-        new AutoRoutine(AutoPosition.TARMAC_D, new ThreeCargoAuto(drive)));
-    autoChooser.addOption("Five Cargo",
-        new AutoRoutine(AutoPosition.TARMAC_D, new FiveCargoAuto(drive)));
-    autoChooser.addOption("Six Cargo",
-        new AutoRoutine(AutoPosition.TARMAC_D, new SixBallAuto(drive)));
+    autoChooser.addOption("Do Nothing", new InstantCommand());
+    autoChooser.addOption("Drive Straight", new BasicAutoDrive(drive, new ChassisSpeeds(3,0,0)));
 
     // Set up choosers
     joystickModeChooser.addDefaultOption("Standard", JoystickMode.Standard);
@@ -158,116 +131,108 @@ public class RobotContainer {
 
     // Alert if in tuning mode
     if (Constants.tuningMode) {
-      new Alert("Tuning mode active, expect decreased network performance.",
-          AlertType.INFO).set(true);
+      new Alert("Tuning mode active, expect decreased network performance.", AlertType.INFO)
+          .set(true);
     }
 
     configureButtonBindings();
+    configureAutoCommands();
+  }
+  private void configureAutoCommands(){
+    AUTO_EVENT_MAP.put("shoot", new PrintCommand("*shoots*"));
+    AUTO_EVENT_MAP.put("pickup", new SpinCommand(drive));
+    AUTO_EVENT_MAP.put("drop", new PrintCommand("*drops*"));
+
+    List<PathPlannerTrajectory> leftAuto = PathPlanner.loadPathGroup("2CubeAutoLeft", AUTO_MAX_VEL, AUTO_MAX_ACCEL);
+    List<PathPlannerTrajectory> midAuto = PathPlanner.loadPathGroup("2CubeAutoMiddle", AUTO_MAX_VEL, AUTO_MAX_ACCEL);
+    List<PathPlannerTrajectory> rightAuto = PathPlanner.loadPathGroup("2CubeAutoRight", AUTO_MAX_VEL, AUTO_MAX_ACCEL);
+
+    Logger.getInstance().recordOutput("Path", leftAuto.get(0));
+
+    SwerveAutoBuilder autoBuilder = new SwerveAutoBuilder(
+    drive::getPose, // Pose2d supplier
+    drive::setPose, // Pose2d consumer, used to reset odometry at the beginning of auto
+    new PIDConstants(5.0, 0.0, 0.0), // PID constants to correct for translation error (used to create the X and Y PID controllers)
+    new PIDConstants(0.5, 0.0, 0.0), // PID constants to correct for rotation error (used to create the rotation controller)
+    drive::runVelocity, // Module states consumer used to output to the drive subsystem
+    AUTO_EVENT_MAP,
+    true, // Should the path be automatically mirrored depending on alliance color. Optional, defaults to true
+    drive //The drive subsystem. Used to properly set the requirements of path following commands
+  );
+    Command TwoCubeAutoLeft = autoBuilder.fullAuto(leftAuto);
+    autoChooser.addDefaultOption("TwoCubeAutoLeft", TwoCubeAutoLeft);
+
+    Command TwoCubeAutoMid = autoBuilder.fullAuto(midAuto);
+    autoChooser.addOption("TwoCubeAutoMid", TwoCubeAutoMid);
+
+    Command TwoCubeAutoRight = autoBuilder.fullAuto(rightAuto);
+    autoChooser.addOption("TwoCubeAutoRight", TwoCubeAutoRight);
+  
   }
 
   /**
    * Use this method to define your button->command mappings. Buttons can be created by
-   * instantiating a {@link GenericHID} or one of its subclasses
-   * ({@link edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then passing it to a
-   * {@link edu.wpi.first.wpilibj2.command.button.JoystickButton}.
+   * instantiating a {@link GenericHID} or one of its subclasses ({@link
+   * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then passing it to a {@link
+   * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
     // Driving controls
     new Trigger(driverController::getStartButton)
         .or(new Trigger(driverController::getBackButton))
-        .onTrue(new InstantCommand(() -> {
-          isFieldRelative = !isFieldRelative;
-          SmartDashboard.putBoolean("Field Relative", isFieldRelative);
-        }).ignoringDisable(true));
+        .onTrue(
+            new InstantCommand(
+                    () -> {
+                      isFieldRelative = !isFieldRelative;
+                      SmartDashboard.putBoolean("Field Relative", isFieldRelative);
+                    })
+                .ignoringDisable(true));
     SmartDashboard.putBoolean("Field Relative", isFieldRelative);
-    drive.setDefaultCommand(new DriveWithJoysticks(drive,
-        () -> -driverController.getLeftY(), () -> -driverController.getLeftX(),
-        () -> -driverController.getRightX(), () -> !isFieldRelative,
-        () -> joystickModeChooser.get(),
-        () -> demoLinearSpeedLimitChooser.get(),
-        () -> demoAngularSpeedLimitChooser.get(),
-        () -> driverController.getRightTriggerAxis()));
+    drive.setDefaultCommand(
+        new DriveWithJoysticks(
+            drive,
+            () -> -driverController.getLeftY(),
+            () -> -driverController.getLeftX(),
+            () -> -driverController.getRightX(),
+            () -> !isFieldRelative,
+            () -> joystickModeChooser.get(),
+            () -> demoLinearSpeedLimitChooser.get(),
+            () -> demoAngularSpeedLimitChooser.get(),
+            () -> driverController.getRightTriggerAxis()));
 
     // Reset gyro command
-    Command resetGyroCommand = new InstantCommand(() -> {
-      drive.setPose(autoDriveTarget);
-    }, drive).ignoringDisable(true);
-    Command rumbleCommand = new StartEndCommand(
-        () -> driverController.setRumble(RumbleType.kRightRumble, 0.5),
-        () -> driverController.setRumble(RumbleType.kRightRumble, 0.0)) {
-      @Override
-      public boolean runsWhenDisabled() {
-        return true;
-      }
-    }.withTimeout(0.2);
+    Command resetGyroCommand =
+        new InstantCommand(
+                () -> {
+                  drive.setPose(autoDriveTarget);
+                },
+                drive)
+            .ignoringDisable(true);
+    Command rumbleCommand =
+        new StartEndCommand(
+            () -> driverController.setRumble(RumbleType.kRightRumble, 0.5),
+            () -> driverController.setRumble(RumbleType.kRightRumble, 0.0)) {
+          @Override
+          public boolean runsWhenDisabled() {
+            return true;
+          }
+        }.withTimeout(0.2);
     new Trigger(driverController::getLeftBumper)
         .and(new Trigger(driverController::getRightBumper))
-        .onTrue(resetGyroCommand).onTrue(rumbleCommand);
+        .onTrue(resetGyroCommand)
+        .onTrue(rumbleCommand);
 
     // Auto drive controls
     // new Trigger(() -> driverController.getLeftTriggerAxis() > 0.5)
     // .whileTrue(new AutoDriveHard(drive));
 
-    // Climber controls
-    climber.setDefaultCommand(
-        new RunClimber(climber, () -> -operatorController.getLeftY()));
   }
-
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    AutoRoutine routine = autoChooser.get();
-    drive.setPose(routine.position.getPose());
-    return routine.command;
-  }
-
-  private static class AutoRoutine {
-    public final AutoPosition position;
-    public final Command command;
-
-    public AutoRoutine(AutoPosition position, Command command) {
-      this.position = position;
-      this.command = command;
-    }
-  }
-
-  public static enum AutoPosition {
-    ORIGIN, TARMAC_A, TARMAC_B, TARMAC_C, TARMAC_D, FENDER_A, FENDER_A_REVERSED, FENDER_B, FENDER_B_REVERSED;
-
-    public Pose2d getPose() {
-      switch (this) {
-        case ORIGIN:
-          return new Pose2d();
-        case TARMAC_A:
-          return FieldConstants.referenceA
-              .transformBy(GeomUtil.transformFromTranslation(-0.5, 0.7));
-        case TARMAC_B:
-          return FieldConstants.referenceB
-              .transformBy(GeomUtil.transformFromTranslation(-0.5, -0.2));
-        case TARMAC_C:
-          return FieldConstants.referenceC
-              .transformBy(GeomUtil.transformFromTranslation(-0.5, -0.1));
-        case TARMAC_D:
-          return FieldConstants.referenceD
-              .transformBy(GeomUtil.transformFromTranslation(-0.5, -0.7));
-        case FENDER_A:
-          return FieldConstants.fenderA
-              .transformBy(GeomUtil.transformFromTranslation(0.5, 0.0));
-        case FENDER_A_REVERSED:
-          return FieldConstants.fenderA.transformBy(new Transform2d(
-              new Translation2d(0.5, 0.0), Rotation2d.fromDegrees(180.0)));
-        case FENDER_B:
-          return FieldConstants.fenderB
-              .transformBy(GeomUtil.transformFromTranslation(0.5, 0.0));
-        case FENDER_B_REVERSED:
-          return FieldConstants.fenderB.transformBy(new Transform2d(
-              new Translation2d(0.5, 0.0), Rotation2d.fromDegrees(180.0)));
-        default:
-          return new Pose2d();
-      }
-    }
+    return autoChooser.get();
   }
 }

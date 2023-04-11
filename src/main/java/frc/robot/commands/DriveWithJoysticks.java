@@ -1,20 +1,20 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
+// Copyright (c) 2023 FRC 6328
+// http://github.com/Mechanical-Advantage
+//
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file at
+// the root directory of this project.
 
 package frc.robot.commands;
 
-import edu.wpi.first.wpilibj2.command.CommandBase;
-
-import frc.robot.subsystems.drive.Drive;
-import frc.robot.util.AutoDriveSoftWithSpline;
-import frc.robot.util.GeomUtil;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj2.command.CommandBase;
+import frc.robot.subsystems.drive.Drive;
+import frc.robot.util.GeomUtil;
 import java.util.function.Supplier;
 
 public class DriveWithJoysticks extends CommandBase {
@@ -32,8 +32,11 @@ public class DriveWithJoysticks extends CommandBase {
   private static final double deadband = 0.1;
 
   /** Creates a new DriveWithJoysticks. */
-  public DriveWithJoysticks(Drive drive, Supplier<Double> leftXSupplier,
-      Supplier<Double> leftYSupplier, Supplier<Double> rightYSupplier,
+  public DriveWithJoysticks(
+      Drive drive,
+      Supplier<Double> leftXSupplier,
+      Supplier<Double> leftYSupplier,
+      Supplier<Double> rightYSupplier,
       Supplier<Boolean> robotRelativeOverride,
       Supplier<JoystickMode> modeSupplier,
       Supplier<Double> linearSpeedLimitSupplier,
@@ -72,8 +75,7 @@ public class DriveWithJoysticks extends CommandBase {
     rightY = MathUtil.applyDeadband(rightY, deadband);
 
     // Apply squaring
-    linearMagnitude =
-        Math.copySign(linearMagnitude * linearMagnitude, linearMagnitude);
+    linearMagnitude = Math.copySign(linearMagnitude * linearMagnitude, linearMagnitude);
     rightY = Math.copySign(rightY * rightY, rightY);
 
     // Apply speed limits
@@ -83,25 +85,27 @@ public class DriveWithJoysticks extends CommandBase {
     // Calcaulate new linear components
     Translation2d linearVelocity =
         new Pose2d(new Translation2d(), linearDirection)
-            .transformBy(
-                GeomUtil.transformFromTranslation(linearMagnitude, 0.0))
+            .transformBy(GeomUtil.transformFromTranslation(linearMagnitude, 0.0))
             .getTranslation();
     if (modeSupplier.get() == JoystickMode.Tank) {
       linearVelocity = new Translation2d(linearVelocity.getX(), 0.0);
     }
 
     // Convert to meters per second
-    ChassisSpeeds speeds = new ChassisSpeeds(
-        linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
-        linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
-        rightY * drive.getMaxAngularSpeedRadPerSec());
+    ChassisSpeeds speeds =
+        new ChassisSpeeds(
+            linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
+            linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
+            rightY * drive.getMaxAngularSpeedRadPerSec());
 
     // Convert from field relative
-    if (!robotRelativeOverride.get()
-        && modeSupplier.get() == JoystickMode.Standard) {
-      speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds.vxMetersPerSecond,
-          speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond,
-          drive.getRotation());
+    if (!robotRelativeOverride.get() && modeSupplier.get() == JoystickMode.Standard) {
+      speeds =
+          ChassisSpeeds.fromFieldRelativeSpeeds(
+              speeds.vxMetersPerSecond,
+              speeds.vyMetersPerSecond,
+              speeds.omegaRadiansPerSecond,
+              drive.getRotation());
     }
 
     // Apply auto drive
@@ -131,6 +135,7 @@ public class DriveWithJoysticks extends CommandBase {
   }
 
   public static enum JoystickMode {
-    Standard, Tank
+    Standard,
+    Tank
   }
 }

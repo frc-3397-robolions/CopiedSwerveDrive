@@ -1,28 +1,26 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
+// Copyright (c) 2023 FRC 6328
+// http://github.com/Mechanical-Advantage
+//
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file at
+// the root directory of this project.
 
 package frc.robot.util;
-
-import java.util.List;
-
-import org.littletonrobotics.junction.LogTable;
-import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.inputs.LoggableInputs;
 
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import java.util.List;
+import org.littletonrobotics.junction.LogTable;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.inputs.LoggableInputs;
 
 /** Manages all SendableChoosers, including replaying values without NT. */
 public class LoggedChoosers extends SubsystemBase {
 
-  private final SendableChooser<String> joystickModeChooser =
-      new SendableChooser<String>();
-  private final SendableChooser<String> autoRoutineChooser =
-      new SendableChooser<String>();
-  private final SendableChooser<String> demoLinearSpeedLimitChooser =
-      new SendableChooser<String>();
+  private final SendableChooser<String> joystickModeChooser = new SendableChooser<String>();
+  private final SendableChooser<String> autoRoutineChooser = new SendableChooser<String>();
+  private final SendableChooser<String> demoLinearSpeedLimitChooser = new SendableChooser<String>();
   private final SendableChooser<String> demoAngularSpeedLimitChooser =
       new SendableChooser<String>();
 
@@ -30,28 +28,24 @@ public class LoggedChoosers extends SubsystemBase {
 
   public LoggedChoosers() {
     addOptions(joystickModeChooser, List.of("Standard", "Tank"));
-    addOptions(autoRoutineChooser,
-        List.of("Do Nothing", "Climb For Fun (TB)", "Climb For Fun (FA*)",
-            "Score With Force (FA*)", "Score With Force (FB*)", "Taxi (TA)",
-            "Taxi (TB)", "Taxi (TC)", "Taxi (TD)", "Taxi (FA)", "Taxi (FB)",
-            "Drive Characterization", "Three Cargo", "Five Cargo",
-            "Six Cargo"));
-    addOptions(demoLinearSpeedLimitChooser, List.of("--Competition Mode--",
-        "Fast Speed (70%)", "Medium Speed (30%)", "Slow Speed (15%)"));
-    addOptions(demoAngularSpeedLimitChooser, List.of("--Competition Mode--",
-        "Fast Speed (70%)", "Medium Speed (30%)", "Slow Speed (15%)"));
+    addOptions(autoRoutineChooser, List.of("Do Nothing", "Drive Straight"));
+    addOptions(
+        demoLinearSpeedLimitChooser,
+        List.of(
+            "--Competition Mode--", "Fast Speed (70%)", "Medium Speed (30%)", "Slow Speed (15%)"));
+    addOptions(
+        demoAngularSpeedLimitChooser,
+        List.of(
+            "--Competition Mode--", "Fast Speed (70%)", "Medium Speed (30%)", "Slow Speed (15%)"));
 
     SmartDashboard.putData("Joystick Mode", joystickModeChooser);
     SmartDashboard.putData("Auto Routine", autoRoutineChooser);
-    SmartDashboard.putData("Demo/Linear Speed Limit",
-        demoLinearSpeedLimitChooser);
-    SmartDashboard.putData("Demo/Angular Speed Limit",
-        demoAngularSpeedLimitChooser);
+    SmartDashboard.putData("Demo/Linear Speed Limit", demoLinearSpeedLimitChooser);
+    SmartDashboard.putData("Demo/Angular Speed Limit", demoAngularSpeedLimitChooser);
   }
 
   /** Adds a set of options to a SendableChooser. */
-  private void addOptions(SendableChooser<String> chooser,
-      List<String> options) {
+  private void addOptions(SendableChooser<String> chooser, List<String> options) {
     boolean firstOption = true;
     for (String option : options) {
       if (firstOption) {
@@ -82,10 +76,8 @@ public class LoggedChoosers extends SubsystemBase {
     public void fromLog(LogTable table) {
       joystickMode = table.getString("JoystickMode", joystickMode);
       autoRoutine = table.getString("AutoRoutine", autoRoutine);
-      demoLinearSpeedLimit =
-          table.getString("DemoLinearSpeedLimit", demoLinearSpeedLimit);
-      demoAngularSpeedLimit =
-          table.getString("DemoAngularSpeedLimit", demoAngularSpeedLimit);
+      demoLinearSpeedLimit = table.getString("DemoLinearSpeedLimit", demoLinearSpeedLimit);
+      demoAngularSpeedLimit = table.getString("DemoAngularSpeedLimit", demoAngularSpeedLimit);
     }
   }
 

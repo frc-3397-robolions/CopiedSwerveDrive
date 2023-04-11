@@ -1,32 +1,35 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
+// Copyright (c) 2023 FRC 6328
+// http://github.com/Mechanical-Advantage
+//
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file at
+// the root directory of this project.
 
 package frc.robot;
 
-import java.util.Map;
-
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.util.Alert;
 import frc.robot.util.Alert.AlertType;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
  * constants. This class should not be used for any other purpose. All constants should be declared
  * globally (i.e. public static). Do not put anything functional in this class.
  *
- * <p>
- * It is advised to statically import this class (or one of its inner classes) wherever the
+ * <p>It is advised to statically import this class (or one of its inner classes) wherever the
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
-  private static final RobotType robot = RobotType.ROBOT_2022S;
+  private static final RobotType robot = RobotType.ROBOT_SIMBOT;
   public static final double loopPeriodSecs = 0.02;
   public static final boolean tuningMode = false;
 
   private static final Alert invalidRobotAlert =
-      new Alert("Invalid robot selected, using competition robot as default.",
-          AlertType.ERROR);
+      new Alert("Invalid robot selected, using competition robot as default.", AlertType.ERROR);
 
   public static RobotType getRobot() {
     if (RobotBase.isReal()) {
@@ -58,10 +61,17 @@ public final class Constants {
       Map.of(RobotType.ROBOT_2022S, "/media/sda2");
 
   public static enum RobotType {
-    ROBOT_2022S, ROBOT_SIMBOT
+    ROBOT_2022S,
+    ROBOT_SIMBOT
   }
 
   public static enum Mode {
-    REAL, REPLAY, SIM
+    REAL,
+    REPLAY,
+    SIM
   }
+  public static HashMap<String, Command> AUTO_EVENT_MAP = new HashMap<>();
+
+  public static final double AUTO_MAX_VEL=2;
+  public static final double AUTO_MAX_ACCEL=1;
 }

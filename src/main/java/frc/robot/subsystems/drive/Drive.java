@@ -1,14 +1,11 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
+// Copyright (c) 2023 FRC 6328
+// http://github.com/Mechanical-Advantage
+//
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file at
+// the root directory of this project.
 
 package frc.robot.subsystems.drive;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
@@ -25,19 +22,23 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.util.GeomUtil;
 import frc.robot.util.LoggedTunableNumber;
+import java.util.Arrays;
+import org.littletonrobotics.junction.Logger;
 
 public class Drive extends SubsystemBase {
   private static final double maxCoastVelocityMetersPerSec = 0.05; // Need to be under this to
-                                                                   // switch to coast when disabling
+  // switch to coast when disabling
 
   private final GyroIO gyroIO;
-  private final GyroIOInputsAutoLogged gyroInputs =
-      new GyroIOInputsAutoLogged();
+  private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
   private final ModuleIO[] moduleIOs = new ModuleIO[4]; // FL, FR, BL, BR
   private final ModuleIOInputsAutoLogged[] moduleInputs =
-      new ModuleIOInputsAutoLogged[] {new ModuleIOInputsAutoLogged(),
-          new ModuleIOInputsAutoLogged(), new ModuleIOInputsAutoLogged(),
-          new ModuleIOInputsAutoLogged()};
+      new ModuleIOInputsAutoLogged[] {
+        new ModuleIOInputsAutoLogged(),
+        new ModuleIOInputsAutoLogged(),
+        new ModuleIOInputsAutoLogged(),
+        new ModuleIOInputsAutoLogged()
+      };
 
   private final double maxLinearSpeed;
   private final double maxAngularSpeed;
@@ -45,19 +46,13 @@ public class Drive extends SubsystemBase {
   private final double trackWidthX;
   private final double trackWidthY;
 
-  private final LoggedTunableNumber driveKp =
-      new LoggedTunableNumber("Drive/DriveKp");
-  private final LoggedTunableNumber driveKd =
-      new LoggedTunableNumber("Drive/DriveKd");
-  private final LoggedTunableNumber driveKs =
-      new LoggedTunableNumber("Drive/DriveKs");
-  private final LoggedTunableNumber driveKv =
-      new LoggedTunableNumber("Drive/DriveKv");
+  private final LoggedTunableNumber driveKp = new LoggedTunableNumber("Drive/DriveKp");
+  private final LoggedTunableNumber driveKd = new LoggedTunableNumber("Drive/DriveKd");
+  private final LoggedTunableNumber driveKs = new LoggedTunableNumber("Drive/DriveKs");
+  private final LoggedTunableNumber driveKv = new LoggedTunableNumber("Drive/DriveKv");
 
-  private final LoggedTunableNumber turnKp =
-      new LoggedTunableNumber("Drive/TurnKp");
-  private final LoggedTunableNumber turnKd =
-      new LoggedTunableNumber("Drive/TurnKd");
+  private final LoggedTunableNumber turnKp = new LoggedTunableNumber("Drive/TurnKp");
+  private final LoggedTunableNumber turnKd = new LoggedTunableNumber("Drive/TurnKd");
 
   private final SwerveDriveKinematics kinematics;
   private SimpleMotorFeedforward driveFeedforward;
@@ -75,8 +70,12 @@ public class Drive extends SubsystemBase {
   private double characterizationVoltage = 0.0;
 
   /** Creates a new Drive. */
-  public Drive(GyroIO gyroIO, ModuleIO flModuleIO, ModuleIO frModuleIO,
-      ModuleIO blModuleIO, ModuleIO brModuleIO) {
+  public Drive(
+      GyroIO gyroIO,
+      ModuleIO flModuleIO,
+      ModuleIO frModuleIO,
+      ModuleIO blModuleIO,
+      ModuleIO brModuleIO) {
     this.gyroIO = gyroIO;
     moduleIOs[0] = flModuleIO;
     moduleIOs[1] = frModuleIO;
@@ -131,16 +130,20 @@ public class Drive extends SubsystemBase {
     kinematics = new SwerveDriveKinematics(getModuleTranslations());
     driveFeedforward = new SimpleMotorFeedforward(driveKs.get(), driveKv.get());
     for (int i = 0; i < 4; i++) {
-      driveFeedback[i] = new PIDController(driveKp.get(), 0.0, driveKd.get(),
-          Constants.loopPeriodSecs);
-      turnFeedback[i] = new PIDController(turnKp.get(), 0.0, turnKd.get(),
-          Constants.loopPeriodSecs);
+      driveFeedback[i] =
+          new PIDController(driveKp.get(), 0.0, driveKd.get(), Constants.loopPeriodSecs);
+      turnFeedback[i] =
+          new PIDController(turnKp.get(), 0.0, turnKd.get(), Constants.loopPeriodSecs);
       turnFeedback[i].enableContinuousInput(-Math.PI, Math.PI);
     }
 
     // Calculate max angular speed
-    maxAngularSpeed = maxLinearSpeed / Arrays.stream(getModuleTranslations())
-        .map(translation -> translation.getNorm()).max(Double::compare).get();
+    maxAngularSpeed =
+        maxLinearSpeed
+            / Arrays.stream(getModuleTranslations())
+                .map(translation -> translation.getNorm())
+                .max(Double::compare)
+                .get();
   }
 
   @Override
@@ -149,15 +152,17 @@ public class Drive extends SubsystemBase {
     Logger.getInstance().processInputs("Drive/Gyro", gyroInputs);
     for (int i = 0; i < 4; i++) {
       moduleIOs[i].updateInputs(moduleInputs[i]);
-      Logger.getInstance().processInputs("Drive/Module" + Integer.toString(i),
-          moduleInputs[i]);
+      Logger.getInstance().processInputs("Drive/Module" + Integer.toString(i), moduleInputs[i]);
     }
 
     // Update objects based on TunableNumbers
-    if (driveKp.hasChanged() || driveKd.hasChanged() || driveKs.hasChanged()
-        || driveKv.hasChanged() || turnKp.hasChanged() || turnKd.hasChanged()) {
-      driveFeedforward =
-          new SimpleMotorFeedforward(driveKs.get(), driveKv.get());
+    if (driveKp.hasChanged()
+        || driveKd.hasChanged()
+        || driveKs.hasChanged()
+        || driveKv.hasChanged()
+        || turnKp.hasChanged()
+        || turnKd.hasChanged()) {
+      driveFeedforward = new SimpleMotorFeedforward(driveKs.get(), driveKv.get());
       for (int i = 0; i < 4; i++) {
         driveFeedback[i].setP(driveKp.get());
         driveFeedback[i].setD(driveKd.get());
@@ -169,8 +174,7 @@ public class Drive extends SubsystemBase {
     // Update angle measurements
     Rotation2d[] turnPositions = new Rotation2d[4];
     for (int i = 0; i < 4; i++) {
-      turnPositions[i] =
-          new Rotation2d(moduleInputs[i].turnAbsolutePositionRad);
+      turnPositions[i] = new Rotation2d(moduleInputs[i].turnAbsolutePositionRad);
     }
 
     if (DriverStation.isDisabled()) {
@@ -184,10 +188,8 @@ public class Drive extends SubsystemBase {
         case NORMAL:
           // In normal mode, run the controllers for turning and driving based on the current
           // setpoint
-          SwerveModuleState[] setpointStates =
-              kinematics.toSwerveModuleStates(closedLoopSetpoint);
-          SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates,
-              maxLinearSpeed);
+          SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(closedLoopSetpoint);
+          SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, maxLinearSpeed);
 
           // If stationary, go to last state
           boolean isStationary =
@@ -205,7 +207,8 @@ public class Drive extends SubsystemBase {
               moduleIOs[i].setTurnVoltage(0.0);
             } else {
               moduleIOs[i].setTurnVoltage(
-                  turnFeedback[i].calculate(turnPositions[i].getRadians(),
+                  turnFeedback[i].calculate(
+                      turnPositions[i].getRadians(),
                       setpointStatesOptimized[i].angle.getRadians()));
             }
 
@@ -217,24 +220,24 @@ public class Drive extends SubsystemBase {
             double velocityRadPerSec =
                 setpointStatesOptimized[i].speedMetersPerSecond / wheelRadius;
             moduleIOs[i].setDriveVoltage(
-                driveFeedforward.calculate(velocityRadPerSec) + driveFeedback[i]
-                    .calculate(moduleInputs[i].driveVelocityRadPerSec,
-                        velocityRadPerSec));
+                driveFeedforward.calculate(velocityRadPerSec)
+                    + driveFeedback[i].calculate(
+                        moduleInputs[i].driveVelocityRadPerSec, velocityRadPerSec));
 
             // Log individual setpoints
-            Logger.getInstance().recordOutput(
-                "SwerveSetpointValues/Drive/" + Integer.toString(i),
-                velocityRadPerSec);
-            Logger.getInstance().recordOutput(
-                "SwerveSetpointValues/Turn/" + Integer.toString(i),
-                setpointStatesOptimized[i].angle.getRadians());
+            Logger.getInstance()
+                .recordOutput(
+                    "SwerveSetpointValues/Drive/" + Integer.toString(i), velocityRadPerSec);
+            Logger.getInstance()
+                .recordOutput(
+                    "SwerveSetpointValues/Turn/" + Integer.toString(i),
+                    setpointStatesOptimized[i].angle.getRadians());
           }
 
           // Log all module setpoints
-          Logger.getInstance().recordOutput("SwerveModuleStates/Setpoints",
-              setpointStates);
-          Logger.getInstance().recordOutput(
-              "SwerveModuleStates/SetpointsOptimized", setpointStatesOptimized);
+          Logger.getInstance().recordOutput("SwerveModuleStates/Setpoints", setpointStates);
+          Logger.getInstance()
+              .recordOutput("SwerveModuleStates/SetpointsOptimized", setpointStatesOptimized);
           break;
 
         case CHARACTERIZATION:
@@ -248,16 +251,14 @@ public class Drive extends SubsystemBase {
 
         case X:
           for (int i = 0; i < 4; i++) {
-            Rotation2d targetRotation =
-                GeomUtil.direction(getModuleTranslations()[i]);
+            Rotation2d targetRotation = GeomUtil.direction(getModuleTranslations()[i]);
             Rotation2d currentRotation = turnPositions[i];
-            if (Math.abs(
-                targetRotation.minus(currentRotation).getDegrees()) > 90.0) {
-              targetRotation =
-                  targetRotation.minus(Rotation2d.fromDegrees(180.0));
+            if (Math.abs(targetRotation.minus(currentRotation).getDegrees()) > 90.0) {
+              targetRotation = targetRotation.minus(Rotation2d.fromDegrees(180.0));
             }
-            moduleIOs[i].setTurnVoltage(turnFeedback[i].calculate(
-                currentRotation.getRadians(), targetRotation.getRadians()));
+            moduleIOs[i].setTurnVoltage(
+                turnFeedback[i].calculate(
+                    currentRotation.getRadians(), targetRotation.getRadians()));
             moduleIOs[i].setDriveVoltage(0.0);
           }
           break;
@@ -267,42 +268,44 @@ public class Drive extends SubsystemBase {
     // Update odometry
     SwerveModuleState[] measuredStatesDiff = new SwerveModuleState[4];
     for (int i = 0; i < 4; i++) {
-      measuredStatesDiff[i] = new SwerveModuleState(
-          (moduleInputs[i].drivePositionRad - lastModulePositionsRad[i])
-              * wheelRadius,
-          turnPositions[i]);
+      measuredStatesDiff[i] =
+          new SwerveModuleState(
+              (moduleInputs[i].drivePositionRad - lastModulePositionsRad[i]) * wheelRadius,
+              turnPositions[i]);
       lastModulePositionsRad[i] = moduleInputs[i].drivePositionRad;
     }
-    ChassisSpeeds chassisStateDiff =
-        kinematics.toChassisSpeeds(measuredStatesDiff);
+    ChassisSpeeds chassisStateDiff = kinematics.toChassisSpeeds(measuredStatesDiff);
     if (gyroInputs.connected) { // Use gyro for angular change when connected
       odometryPose =
-          odometryPose.exp(new Twist2d(chassisStateDiff.vxMetersPerSecond,
-              chassisStateDiff.vyMetersPerSecond,
-              gyroInputs.positionRad - lastGyroPosRad));
+          odometryPose.exp(
+              new Twist2d(
+                  chassisStateDiff.vxMetersPerSecond,
+                  chassisStateDiff.vyMetersPerSecond,
+                  gyroInputs.positionRad - lastGyroPosRad));
     } else { // Fall back to using angular velocity (disconnected or sim)
       odometryPose =
-          odometryPose.exp(new Twist2d(chassisStateDiff.vxMetersPerSecond,
-              chassisStateDiff.vyMetersPerSecond,
-              chassisStateDiff.omegaRadiansPerSecond));
+          odometryPose.exp(
+              new Twist2d(
+                  chassisStateDiff.vxMetersPerSecond,
+                  chassisStateDiff.vyMetersPerSecond,
+                  chassisStateDiff.omegaRadiansPerSecond));
     }
     lastGyroPosRad = gyroInputs.positionRad;
 
     // Update field velocity
-    SwerveModuleState[] measuredStates =
-        new SwerveModuleState[] {null, null, null, null};
+    SwerveModuleState[] measuredStates = new SwerveModuleState[] {null, null, null, null};
     for (int i = 0; i < 4; i++) {
-      measuredStates[i] = new SwerveModuleState(
-          moduleInputs[i].driveVelocityRadPerSec * wheelRadius,
-          turnPositions[i]);
+      measuredStates[i] =
+          new SwerveModuleState(
+              moduleInputs[i].driveVelocityRadPerSec * wheelRadius, turnPositions[i]);
     }
     ChassisSpeeds chassisState = kinematics.toChassisSpeeds(measuredStates);
-    fieldVelocity = new Translation2d(chassisState.vxMetersPerSecond,
-        chassisState.vyMetersPerSecond).rotateBy(getRotation());
+    fieldVelocity =
+        new Translation2d(chassisState.vxMetersPerSecond, chassisState.vyMetersPerSecond)
+            .rotateBy(getRotation());
 
     // Log measured states
-    Logger.getInstance().recordOutput("SwerveModuleStates/Measured",
-        measuredStates);
+    Logger.getInstance().recordOutput("SwerveModuleStates/Measured", measuredStates);
 
     // Log odometry pose
     Logger.getInstance().recordOutput("Odometry/Robot", odometryPose);
@@ -319,8 +322,8 @@ public class Drive extends SubsystemBase {
     } else {
       boolean stillMoving = false;
       for (int i = 0; i < 4; i++) {
-        if (Math.abs(moduleInputs[i].driveVelocityRadPerSec
-            * wheelRadius) > maxCoastVelocityMetersPerSec) {
+        if (Math.abs(moduleInputs[i].driveVelocityRadPerSec * wheelRadius)
+            > maxCoastVelocityMetersPerSec) {
           stillMoving = true;
         }
       }
@@ -337,7 +340,7 @@ public class Drive extends SubsystemBase {
 
   /**
    * Runs the drive at the desired velocity.
-   * 
+   *
    * @param speeds Speeds in meters/sec
    */
   public void runVelocity(ChassisSpeeds speeds) {
@@ -386,10 +389,11 @@ public class Drive extends SubsystemBase {
   /** Returns an array of module translations. */
   public Translation2d[] getModuleTranslations() {
     return new Translation2d[] {
-        new Translation2d(trackWidthX / 2.0, trackWidthY / 2.0),
-        new Translation2d(trackWidthX / 2.0, -trackWidthY / 2.0),
-        new Translation2d(-trackWidthX / 2.0, trackWidthY / 2.0),
-        new Translation2d(-trackWidthX / 2.0, -trackWidthY / 2.0)};
+      new Translation2d(trackWidthX / 2.0, trackWidthY / 2.0),
+      new Translation2d(trackWidthX / 2.0, -trackWidthY / 2.0),
+      new Translation2d(-trackWidthX / 2.0, trackWidthY / 2.0),
+      new Translation2d(-trackWidthX / 2.0, -trackWidthY / 2.0)
+    };
   }
 
   /** Runs forwards at the commanded voltage. */
@@ -408,6 +412,8 @@ public class Drive extends SubsystemBase {
   }
 
   private static enum DriveMode {
-    NORMAL, X, CHARACTERIZATION
+    NORMAL,
+    X,
+    CHARACTERIZATION
   }
 }

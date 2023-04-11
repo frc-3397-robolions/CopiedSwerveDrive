@@ -1,6 +1,9 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
+// Copyright (c) 2023 FRC 6328
+// http://github.com/Mechanical-Advantage
+//
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file at
+// the root directory of this project.
 
 package frc.robot.util.trajectory;
 
@@ -16,8 +19,7 @@ import edu.wpi.first.math.trajectory.Trajectory;
  * compared to skid-steer style drivetrains because it is possible to individually control forward,
  * sideways, and angular velocity.
  *
- * <p>
- * The holonomic drive controller takes in one PID controller for each direction, forward and
+ * <p>The holonomic drive controller takes in one PID controller for each direction, forward and
  * sideways, and one profiled PID controller for the angular direction. Because the heading dynamics
  * are decoupled from translations, users can specify a custom heading that the drivetrain should
  * point toward. This heading reference is profiled for smoothness.
@@ -41,8 +43,8 @@ public class CustomHolonomicDriveController {
    * @param thetaController A PID controller to respond to error in angle.
    */
   @SuppressWarnings("ParameterName")
-  public CustomHolonomicDriveController(PIDController xController,
-      PIDController yController, PIDController thetaController) {
+  public CustomHolonomicDriveController(
+      PIDController xController, PIDController yController, PIDController thetaController) {
     m_xController = xController;
     m_yController = yController;
     m_thetaController = thetaController;
@@ -84,8 +86,11 @@ public class CustomHolonomicDriveController {
    * @return The next output of the holonomic drive controller.
    */
   @SuppressWarnings("LocalVariableName")
-  public ChassisSpeeds calculate(Pose2d currentPose, Pose2d poseRef,
-      double linearVelocityRefMeters, Rotation2d angleRef,
+  public ChassisSpeeds calculate(
+      Pose2d currentPose,
+      Pose2d poseRef,
+      double linearVelocityRefMeters,
+      Rotation2d angleRef,
       double angleVelocityRefRadians) {
 
     // Calculate feedforward velocities (field-relative).
@@ -97,21 +102,18 @@ public class CustomHolonomicDriveController {
     m_rotationError = angleRef.minus(currentPose.getRotation());
 
     if (!m_enabled) {
-      return ChassisSpeeds.fromFieldRelativeSpeeds(xFF, yFF, thetaFF,
-          currentPose.getRotation());
+      return ChassisSpeeds.fromFieldRelativeSpeeds(xFF, yFF, thetaFF, currentPose.getRotation());
     }
 
     // Calculate feedback velocities (based on position error).
-    double xFeedback =
-        m_xController.calculate(currentPose.getX(), poseRef.getX());
-    double yFeedback =
-        m_yController.calculate(currentPose.getY(), poseRef.getY());
-    double thetaFeedback = m_thetaController.calculate(
-        currentPose.getRotation().getRadians(), angleRef.getRadians());
+    double xFeedback = m_xController.calculate(currentPose.getX(), poseRef.getX());
+    double yFeedback = m_yController.calculate(currentPose.getY(), poseRef.getY());
+    double thetaFeedback =
+        m_thetaController.calculate(currentPose.getRotation().getRadians(), angleRef.getRadians());
 
     // Return next output.
-    return ChassisSpeeds.fromFieldRelativeSpeeds(xFF + xFeedback,
-        yFF + yFeedback, thetaFF + thetaFeedback, currentPose.getRotation());
+    return ChassisSpeeds.fromFieldRelativeSpeeds(
+        xFF + xFeedback, yFF + yFeedback, thetaFF + thetaFeedback, currentPose.getRotation());
   }
 
   /**
@@ -122,11 +124,15 @@ public class CustomHolonomicDriveController {
    * @param holonomicRotationState The desired holonomic rotation state.
    * @return The next output of the holonomic drive controller.
    */
-  public ChassisSpeeds calculate(Pose2d currentPose,
+  public ChassisSpeeds calculate(
+      Pose2d currentPose,
       Trajectory.State driveState,
       RotationSequence.State holonomicRotationState) {
-    return calculate(currentPose, driveState.poseMeters,
-        driveState.velocityMetersPerSecond, holonomicRotationState.position,
+    return calculate(
+        currentPose,
+        driveState.poseMeters,
+        driveState.velocityMetersPerSecond,
+        holonomicRotationState.position,
         holonomicRotationState.velocityRadiansPerSec);
   }
 

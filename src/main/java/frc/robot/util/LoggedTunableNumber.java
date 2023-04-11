@@ -1,8 +1,14 @@
+// Copyright (c) 2023 FRC 6328
+// http://github.com/Mechanical-Advantage
+//
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file at
+// the root directory of this project.
+
 package frc.robot.util;
 
-import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
-
 import frc.robot.Constants;
+import org.littletonrobotics.junction.networktables.LoggedDashboardNumber;
 
 /**
  * Class for a tunable number. Gets value from dashboard in tuning mode, returns default if not or
@@ -19,7 +25,7 @@ public class LoggedTunableNumber {
 
   /**
    * Create a new LoggedTunableNumber
-   * 
+   *
    * @param dashboardKey Key on dashboard
    */
   public LoggedTunableNumber(String dashboardKey) {
@@ -28,7 +34,7 @@ public class LoggedTunableNumber {
 
   /**
    * Create a new LoggedTunableNumber with the default value
-   * 
+   *
    * @param dashboardKey Key on dashboard
    * @param defaultValue Default value
    */
@@ -39,7 +45,7 @@ public class LoggedTunableNumber {
 
   /**
    * Set the default value of the number. The default value can only be set once.
-   * 
+   *
    * @param defaultValue The default value
    */
   public void initDefault(double defaultValue) {
@@ -54,7 +60,7 @@ public class LoggedTunableNumber {
 
   /**
    * Get the current value, from dashboard if available and in tuning mode.
-   * 
+   *
    * @return The current value
    */
   public double get() {
@@ -67,9 +73,9 @@ public class LoggedTunableNumber {
 
   /**
    * Checks whether the number has changed since our last check
-   * 
+   *
    * @return True if the number has changed since the last time this method was called, false
-   *         otherwise
+   *     otherwise
    */
   public boolean hasChanged() {
     double currentValue = get();

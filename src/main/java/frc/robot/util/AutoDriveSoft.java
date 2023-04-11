@@ -1,6 +1,9 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
+// Copyright (c) 2023 FRC 6328
+// http://github.com/Mechanical-Advantage
+//
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file at
+// the root directory of this project.
 
 package frc.robot.util;
 
@@ -24,21 +27,21 @@ public class AutoDriveSoft {
 
   private AutoDriveSoft() {}
 
-  public static ChassisSpeeds calculate(ChassisSpeeds commandedSpeeds,
-      Pose2d currentPose) {
-    ChassisSpeeds speeds = new ChassisSpeeds(commandedSpeeds.vxMetersPerSecond,
-        commandedSpeeds.vyMetersPerSecond,
-        commandedSpeeds.omegaRadiansPerSecond);
+  public static ChassisSpeeds calculate(ChassisSpeeds commandedSpeeds, Pose2d currentPose) {
+    ChassisSpeeds speeds =
+        new ChassisSpeeds(
+            commandedSpeeds.vxMetersPerSecond,
+            commandedSpeeds.vyMetersPerSecond,
+            commandedSpeeds.omegaRadiansPerSecond);
 
     // Get control percent
     double controlPercent =
-        (currentPose.getTranslation().getDistance(targetPose.getTranslation())
-            - minRadius) / (maxRadius - minRadius);
+        (currentPose.getTranslation().getDistance(targetPose.getTranslation()) - minRadius)
+            / (maxRadius - minRadius);
     controlPercent = 1.0 - MathUtil.clamp(controlPercent, 0.0, 1.0);
 
     // Adjust turn speed
-    Rotation2d holonomicRotationError =
-        currentPose.getRotation().minus(targetHolonomicRotation);
+    Rotation2d holonomicRotationError = currentPose.getRotation().minus(targetHolonomicRotation);
     double maxTurnErrorRad = (1 - controlPercent) * Math.PI;
     if (holonomicRotationError.getRadians() < -maxTurnErrorRad) {
       speeds.omegaRadiansPerSecond +=
@@ -52,12 +55,12 @@ public class AutoDriveSoft {
     double xOffset = currentPose.relativeTo(targetPose).getX();
     Rotation2d targetDriveRotation;
     if (xOffset < 0.0) {
-      Translation2d intermediateTarget = targetPose
-          .transformBy(
-              GeomUtil.transformFromTranslation(xOffset * convergeRatio, 0.0))
-          .getTranslation();
-      targetDriveRotation = GeomUtil
-          .direction(intermediateTarget.minus(currentPose.getTranslation()));
+      Translation2d intermediateTarget =
+          targetPose
+              .transformBy(GeomUtil.transformFromTranslation(xOffset * convergeRatio, 0.0))
+              .getTranslation();
+      targetDriveRotation =
+          GeomUtil.direction(intermediateTarget.minus(currentPose.getTranslation()));
     } else {
       targetDriveRotation = targetPose.getRotation();
     }
@@ -65,33 +68,29 @@ public class AutoDriveSoft {
     // Get command direction and magnitude
     Rotation2d commandDirection =
         new Rotation2d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
-    double commandMagnitude =
-        Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+    double commandMagnitude = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
 
     // Adjust drive direction
-    Rotation2d commandDirectionRelative =
-        commandDirection.minus(targetDriveRotation);
-    boolean invertDirection =
-        Math.abs(commandDirectionRelative.getRadians()) > Math.PI / 2.0;
+    Rotation2d commandDirectionRelative = commandDirection.minus(targetDriveRotation);
+    boolean invertDirection = Math.abs(commandDirectionRelative.getRadians()) > Math.PI / 2.0;
 
     if (invertDirection) {
-      commandDirectionRelative =
-          commandDirectionRelative.rotateBy(Rotation2d.fromDegrees(180.0));
+      commandDirectionRelative = commandDirectionRelative.rotateBy(Rotation2d.fromDegrees(180.0));
     }
-    double directionNormalized =
-        Math.abs(commandDirectionRelative.getRadians()) / (Math.PI / 2.0);
-    directionNormalized = Math.pow(directionNormalized,
-        Math.pow(2.0, controlPercent * driveMaxExp));
+    double directionNormalized = Math.abs(commandDirectionRelative.getRadians()) / (Math.PI / 2.0);
+    directionNormalized =
+        Math.pow(directionNormalized, Math.pow(2.0, controlPercent * driveMaxExp));
     commandDirectionRelative =
-        new Rotation2d(Math.copySign(directionNormalized * (Math.PI / 2.0),
-            commandDirectionRelative.getRadians()));
+        new Rotation2d(
+            Math.copySign(
+                directionNormalized * (Math.PI / 2.0), commandDirectionRelative.getRadians()));
     if (invertDirection) {
-      commandDirectionRelative =
-          commandDirectionRelative.rotateBy(Rotation2d.fromDegrees(180.0));
+      commandDirectionRelative = commandDirectionRelative.rotateBy(Rotation2d.fromDegrees(180.0));
     }
 
-    Translation2d linearCommand = new Translation2d(commandMagnitude, 0.0)
-        .rotateBy(targetDriveRotation.plus(commandDirectionRelative));
+    Translation2d linearCommand =
+        new Translation2d(commandMagnitude, 0.0)
+            .rotateBy(targetDriveRotation.plus(commandDirectionRelative));
     speeds.vxMetersPerSecond = linearCommand.getX();
     speeds.vyMetersPerSecond = linearCommand.getY();
 
