@@ -8,7 +8,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.subsystems.drive.Drive;
-
+//@TODO make this work to spin 360 degrees
 public class SpinCommand extends CommandBase {
   /** Creates a new SpinCommand. */
   Drive drive;
@@ -28,7 +28,9 @@ public class SpinCommand extends CommandBase {
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
-  public void execute() {}
+  public void execute() {
+    System.out.println(drive.getRotation().getRotations());
+  }
 
   // Called once the command ends or is interrupted.
   @Override
@@ -39,6 +41,6 @@ public class SpinCommand extends CommandBase {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return drive.getRotation().getRotations()-startpos>=1;
+    return false;
   }
 }

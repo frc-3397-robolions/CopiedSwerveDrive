@@ -140,7 +140,7 @@ public class RobotContainer {
   }
   private void configureAutoCommands(){
     AUTO_EVENT_MAP.put("shoot", new PrintCommand("*shoots*"));
-    AUTO_EVENT_MAP.put("pickup", new SpinCommand(drive));
+    AUTO_EVENT_MAP.put("pickup", new BasicAutoDrive(drive, new ChassisSpeeds(0, 0, 0.5*drive.getMaxAngularSpeedRadPerSec())).withTimeout(2));
     AUTO_EVENT_MAP.put("drop", new PrintCommand("*drops*"));
 
     List<PathPlannerTrajectory> leftAuto = PathPlanner.loadPathGroup("2CubeAutoLeft", AUTO_MAX_VEL, AUTO_MAX_ACCEL);
@@ -153,7 +153,7 @@ public class RobotContainer {
     drive::getPose, // Pose2d supplier
     drive::setPose, // Pose2d consumer, used to reset odometry at the beginning of auto
     new PIDConstants(5.0, 0.0, 0.0), // PID constants to correct for translation error (used to create the X and Y PID controllers)
-    new PIDConstants(0.5, 0.0, 0.0), // PID constants to correct for rotation error (used to create the rotation controller)
+    new PIDConstants(1, 0.0, 0.0), // PID constants to correct for rotation error (used to create the rotation controller)
     drive::runVelocity, // Module states consumer used to output to the drive subsystem
     AUTO_EVENT_MAP,
     true, // Should the path be automatically mirrored depending on alliance color. Optional, defaults to true
