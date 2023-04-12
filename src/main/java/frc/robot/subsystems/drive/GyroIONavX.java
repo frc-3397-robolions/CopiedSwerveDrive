@@ -38,5 +38,6 @@ public class GyroIONavX implements GyroIO {
     inputs.connected = true;
     inputs.positionRad = Units.degreesToRadians(gyro.getYaw());
     inputs.velocityRadPerSec = Units.degreesToRadians(xyzDps[2]);
+    inputs.rotation=gyro.getRotation2d();
   }
 }
