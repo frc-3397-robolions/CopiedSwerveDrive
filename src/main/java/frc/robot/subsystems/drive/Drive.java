@@ -152,10 +152,10 @@ public class Drive extends SubsystemBase {
       kinematics,
       Rotation2d.fromRadians(gyroInputs.positionRad),
       new SwerveModulePosition[] {
-        moduleInputs[0].state,
-        moduleInputs[1].state,
-        moduleInputs[2].state,
-        moduleInputs[3].state
+        moduleInputs[0].pos,
+        moduleInputs[1].pos,
+        moduleInputs[2].pos,
+        moduleInputs[3].pos
       },
       odometryPose
       ); 

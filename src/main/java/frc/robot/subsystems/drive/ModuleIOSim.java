@@ -54,7 +54,8 @@ public class ModuleIOSim implements ModuleIO {
     inputs.turnCurrentAmps = new double[] {Math.abs(turnSim.getCurrentDrawAmps())};
     inputs.turnTempCelcius = new double[] {};
 
-    inputs.state = new SwerveModulePosition(inputs.drivePositionRad*Units.inchesToMeters(2), Rotation2d.fromRadians(inputs.turnAbsolutePositionRad));
+    inputs.pos = new SwerveModulePosition(inputs.drivePositionRad*Units.inchesToMeters(2), Rotation2d.fromRadians(inputs.turnAbsolutePositionRad));
+    inputs.state = new SwerveModuleState(inputs.driveVelocityRadPerSec*Units.inchesToMeters(2), Rotation2d.fromRadians(inputs.turnAbsolutePositionRad));
   }
 
   public void setDriveVoltage(double volts) {

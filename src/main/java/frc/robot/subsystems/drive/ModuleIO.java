@@ -30,7 +30,8 @@ public interface ModuleIO {
     public double[] turnCurrentAmps = new double[] {};
     public double[] turnTempCelcius = new double[] {};
 
-    public SwerveModulePosition state = new SwerveModulePosition(0, new Rotation2d(0));
+    public SwerveModulePosition pos = new SwerveModulePosition(0, new Rotation2d(0));
+    public SwerveModuleState state = new SwerveModuleState(0,new Rotation2d(0));
   }
 
   /** Updates the set of loggable inputs. */

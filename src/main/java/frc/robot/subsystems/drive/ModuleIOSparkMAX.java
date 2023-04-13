@@ -13,6 +13,7 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.RelativeEncoder;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.RobotController;
@@ -121,7 +122,8 @@ public class ModuleIOSparkMAX implements ModuleIO {
 
     inputs.turnCurrentAmps = new double[] {turnSparkMax.getOutputCurrent()};
     inputs.turnTempCelcius = new double[] {turnSparkMax.getMotorTemperature()};
-    inputs.state = new SwerveModulePosition(inputs.drivePositionRad*Units.inchesToMeters(2), Rotation2d.fromRadians(inputs.turnAbsolutePositionRad));
+    inputs.pos = new SwerveModulePosition(inputs.drivePositionRad*Units.inchesToMeters(2), Rotation2d.fromRadians(inputs.turnAbsolutePositionRad));
+    inputs.state = new SwerveModuleState(inputs.driveVelocityRadPerSec*Units.inchesToMeters(2), Rotation2d.fromRadians(inputs.turnAbsolutePositionRad));
 
   }
 
