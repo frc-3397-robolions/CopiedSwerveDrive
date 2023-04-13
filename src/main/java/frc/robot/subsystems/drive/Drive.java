@@ -177,29 +177,14 @@ public class Drive extends SubsystemBase {
       moduleIOs[i].updateInputs(moduleInputs[i]);
       Logger.getInstance().processInputs("Drive/Module" + Integer.toString(i), moduleInputs[i]);
     }
-
-    // Update objects based on TunableNumbers
-    if (driveKp.hasChanged()
-        || driveKd.hasChanged()
-        || driveKs.hasChanged()
-        || driveKv.hasChanged()
-        || turnKp.hasChanged()
-        || turnKd.hasChanged()) {
-      driveFeedforward = new SimpleMotorFeedforward(driveKs.get(), driveKv.get());
-      for (int i = 0; i < 4; i++) {
-        driveFeedback[i].setP(driveKp.get());
-        driveFeedback[i].setD(driveKd.get());
-        turnFeedback[i].setP(turnKp.get());
-        turnFeedback[i].setD(turnKd.get());
-      }
-    }
-
     // Update angle measurements
     Rotation2d[] turnPositions = new Rotation2d[4];
     for (int i = 0; i < 4; i++) {
       turnPositions[i] = new Rotation2d(moduleInputs[i].turnAbsolutePositionRad);
     }
-
+    // Update objects based on TunableNumbers
+    updateTunables();
+    
     if (DriverStation.isDisabled()) {
       // Disable output while disabled
       for (int i = 0; i < 4; i++) {
@@ -369,6 +354,23 @@ public class Drive extends SubsystemBase {
   public void runVelocity(ChassisSpeeds speeds) {
     driveMode = DriveMode.NORMAL;
     closedLoopSetpoint = speeds;
+  }
+
+  public void updateTunables(){
+    if (driveKp.hasChanged()
+        || driveKd.hasChanged()
+        || driveKs.hasChanged()
+        || driveKv.hasChanged()
+        || turnKp.hasChanged()
+        || turnKd.hasChanged()) {
+      driveFeedforward = new SimpleMotorFeedforward(driveKs.get(), driveKv.get());
+      for (int i = 0; i < 4; i++) {
+        driveFeedback[i].setP(driveKp.get());
+        driveFeedback[i].setD(driveKd.get());
+        turnFeedback[i].setP(turnKp.get());
+        turnFeedback[i].setD(turnKd.get());
+      }
+    }
   }
 
   /** Stops the drive. */
