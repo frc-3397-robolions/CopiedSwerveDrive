@@ -77,30 +77,26 @@ public class Drive extends SubsystemBase {
 
   private DriveMode driveMode = DriveMode.NORMAL;
   private ChassisSpeeds closedLoopSetpoint = new ChassisSpeeds();
-  private double characterizationVoltage = 0.0;
 
   public PhotonCameraWrapper pcw = new PhotonCameraWrapper();
   private SwerveDrivePoseEstimator m_PoseEstimator;
   /** Creates a new Drive. */
-  public Drive(
-      GyroIO gyroIO,
-      ModuleIO flModuleIO,
-      ModuleIO frModuleIO,
-      ModuleIO blModuleIO,
-      ModuleIO brModuleIO) {
+  public Drive(GyroIO gyroIO,ModuleIO flModuleIO,ModuleIO frModuleIO,ModuleIO blModuleIO,ModuleIO brModuleIO) {
+
     this.gyroIO = gyroIO;
     moduleIOs[0] = flModuleIO;
     moduleIOs[1] = frModuleIO;
     moduleIOs[2] = blModuleIO;
     moduleIOs[3] = brModuleIO;
+    
+    maxLinearSpeed = Units.feetToMeters(14.5);
+    wheelRadius = Units.inchesToMeters(2.0);
+    trackWidthX = Units.inchesToMeters(25.0);
+    trackWidthY = Units.inchesToMeters(24.0);
 
+    //Assign robot constants based on mode
     switch (Constants.getRobot()) {
       case ROBOT_2022S:
-        maxLinearSpeed = Units.feetToMeters(14.5);
-        wheelRadius = Units.inchesToMeters(2.0);
-        trackWidthX = Units.inchesToMeters(25.0);
-        trackWidthY = Units.inchesToMeters(24.0);
-
         driveKp.initDefault(0.1);
         driveKd.initDefault(0.0);
         driveKs.initDefault(0.12349);
@@ -110,11 +106,6 @@ public class Drive extends SubsystemBase {
         turnKd.initDefault(0.0);
         break;
       case ROBOT_SIMBOT:
-        maxLinearSpeed = Units.feetToMeters(14.5);
-        wheelRadius = Units.inchesToMeters(2.0);
-        trackWidthX = 0.65;
-        trackWidthY = 0.65;
-
         driveKp.initDefault(0.9);
         driveKd.initDefault(0.0);
         driveKs.initDefault(0.116970);
@@ -124,11 +115,6 @@ public class Drive extends SubsystemBase {
         turnKd.initDefault(0.0);
         break;
       default:
-        maxLinearSpeed = 0.0;
-        wheelRadius = 0.0;
-        trackWidthX = 0.0;
-        trackWidthY = 0.0;
-
         driveKp.initDefault(0.0);
         driveKd.initDefault(0.0);
         driveKs.initDefault(0.0);
@@ -141,6 +127,7 @@ public class Drive extends SubsystemBase {
 
     kinematics = new SwerveDriveKinematics(getModuleTranslations());
     driveFeedforward = new SimpleMotorFeedforward(driveKs.get(), driveKv.get());
+    //Make unique PID controllers for each module. May or may not be neccesary
     for (int i = 0; i < 4; i++) {
       driveFeedback[i] =
           new PIDController(driveKp.get(), 0.0, driveKd.get(), Constants.loopPeriodSecs);
@@ -184,15 +171,17 @@ public class Drive extends SubsystemBase {
     }
     // Update objects based on TunableNumbers
     updateTunables();
-    
+
+    // Disable output while disabled
     if (DriverStation.isDisabled()) {
-      // Disable output while disabled
+      
       for (int i = 0; i < 4; i++) {
         moduleIOs[i].setTurnVoltage(0.0);
         moduleIOs[i].setDriveVoltage(0.0);
       }
     } else {
       switch (driveMode) {
+        //Run based on closedLoopSetpoint
         case NORMAL:
           // In normal mode, run the controllers for turning and driving based on the current
           // setpoint
@@ -247,17 +236,9 @@ public class Drive extends SubsystemBase {
           Logger.getInstance()
               .recordOutput("SwerveModuleStates/SetpointsOptimized", setpointStatesOptimized);
           break;
-
-        case CHARACTERIZATION:
-          // In characterization mode, drive at the specified voltage (and turn to zero degrees)
-          for (int i = 0; i < 4; i++) {
-            moduleIOs[i].setTurnVoltage(
-                turnFeedback[i].calculate(turnPositions[i].getRadians(), 0.0));
-            moduleIOs[i].setDriveVoltage(characterizationVoltage);
-          }
-          break;
-
-        case X:
+ 
+          
+      /*Go to X Stance to stay in place*/  case X:
           for (int i = 0; i < 4; i++) {
             Rotation2d targetRotation = GeomUtil.direction(getModuleTranslations()[i]);
             Rotation2d currentRotation = turnPositions[i];
@@ -421,24 +402,8 @@ public class Drive extends SubsystemBase {
     };
   }
 
-  /** Runs forwards at the commanded voltage. */
-  public void runCharacterizationVolts(double volts) {
-    driveMode = DriveMode.CHARACTERIZATION;
-    characterizationVoltage = volts;
-  }
-
-  /** Returns the average drive velocity in radians/sec. */
-  public double getCharacterizationVelocity() {
-    double driveVelocityAverage = 0.0;
-    for (int i = 0; i < 4; i++) {
-      driveVelocityAverage += moduleInputs[i].driveVelocityRadPerSec;
-    }
-    return driveVelocityAverage / 4.0;
-  }
-
   private static enum DriveMode {
     NORMAL,
-    X,
-    CHARACTERIZATION
+    X
   }
 }
