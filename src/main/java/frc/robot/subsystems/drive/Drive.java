@@ -30,7 +30,10 @@ import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.PhotonCameraWrapper;
 
 import java.util.Arrays;
+import java.util.Optional;
+
 import org.littletonrobotics.junction.Logger;
+import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
@@ -255,38 +258,23 @@ public class Drive extends SubsystemBase {
     }
 
     // Update odometry
-    SwerveModuleState[] measuredStatesDiff = new SwerveModuleState[4];
-    for (int i = 0; i < 4; i++) {
-      measuredStatesDiff[i] =
-          new SwerveModuleState(
-              (moduleInputs[i].drivePositionRad - lastModulePositionsRad[i]) * wheelRadius,
-              turnPositions[i]);
-      lastModulePositionsRad[i] = moduleInputs[i].drivePositionRad;
-    }
-    ChassisSpeeds chassisStateDiff = kinematics.toChassisSpeeds(measuredStatesDiff);
-    if (gyroInputs.connected) { // Use gyro for angular change when connected
-      odometryPose =
-          odometryPose.exp(
-              new Twist2d(
-                  chassisStateDiff.vxMetersPerSecond,
-                  chassisStateDiff.vyMetersPerSecond,
-                  gyroInputs.positionRad - lastGyroPosRad));
-    } else { // Fall back to using angular velocity (disconnected or sim)
-      odometryPose =
-          odometryPose.exp(
-              new Twist2d(
-                  chassisStateDiff.vxMetersPerSecond,
-                  chassisStateDiff.vyMetersPerSecond,
-                  chassisStateDiff.omegaRadiansPerSecond));
-    }
+    m_PoseEstimator.update(Rotation2d.fromRadians(gyroInputs.positionRad), new SwerveModulePosition[] {
+      moduleInputs[0].pos,
+      moduleInputs[1].pos,
+      moduleInputs[2].pos,
+      moduleInputs[3].pos
+    });
+    Optional<EstimatedRobotPose> result =
+                pcw.getEstimatedGlobalPose(m_PoseEstimator.getEstimatedPosition());
+    if(result.isPresent())
+    m_PoseEstimator.addVisionMeasurement(result.get().estimatedPose.toPose2d(), result.get().timestampSeconds);
+    odometryPose = m_PoseEstimator.getEstimatedPosition();
     lastGyroPosRad = gyroInputs.positionRad;
 
     // Update field velocity
     SwerveModuleState[] measuredStates = new SwerveModuleState[] {null, null, null, null};
     for (int i = 0; i < 4; i++) {
-      measuredStates[i] =
-          new SwerveModuleState(
-              moduleInputs[i].driveVelocityRadPerSec * wheelRadius, turnPositions[i]);
+      measuredStates[i] = moduleInputs[i].state;
     }
     ChassisSpeeds chassisState = kinematics.toChassisSpeeds(measuredStates);
     fieldVelocity =
