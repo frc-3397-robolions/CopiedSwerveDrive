@@ -8,6 +8,8 @@
 package frc.robot.subsystems.drive;
 
 import com.kauailabs.navx.frc.AHRS;
+
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.I2C.Port;
 import frc.robot.Constants;
@@ -38,5 +40,6 @@ public class GyroIONavX implements GyroIO {
     inputs.connected = true;
     inputs.positionRad = Units.degreesToRadians(gyro.getYaw());
     inputs.velocityRadPerSec = Units.degreesToRadians(xyzDps[2]);
+    inputs.rotation2d = Rotation2d.fromDegrees(gyro.getYaw());
   }
 }
