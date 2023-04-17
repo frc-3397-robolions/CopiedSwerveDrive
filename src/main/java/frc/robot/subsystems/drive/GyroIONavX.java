@@ -25,7 +25,7 @@ public class GyroIONavX implements GyroIO {
         gyro = new AHRS(Port.kMXP);
         break;
       default:
-        throw new RuntimeException("Invalid robot for GyroIOPigeon2");
+        throw new RuntimeException("Invalid robot for GyroIONavX");
     }
   }
 

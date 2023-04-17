@@ -257,8 +257,7 @@ public class Drive extends SubsystemBase {
       }
     }
 
-    // Update odometry
-    updateOdometry(moduleInputs); 
+    
 
     // Update field velocity
     SwerveModuleState[] measuredStates = new SwerveModuleState[] {null, null, null, null};
@@ -269,6 +268,17 @@ public class Drive extends SubsystemBase {
     fieldVelocity =
         new Translation2d(chassisState.vxMetersPerSecond, chassisState.vyMetersPerSecond)
             .rotateBy(getRotation());
+    if(Constants.getRobot()==RobotType.ROBOT_SIMBOT){
+      //If in sim mode, make up gyro pos from chassis states
+      fieldVelocity = new Translation2d(chassisState.vxMetersPerSecond, chassisState.vyMetersPerSecond)
+                        .rotateBy(Rotation2d.fromRadians(chassisState.omegaRadiansPerSecond));
+      gyroInputs.velocityRadPerSec = chassisState.omegaRadiansPerSecond;
+      gyroInputs.positionRad+=chassisState.omegaRadiansPerSecond;
+      gyroInputs.rotation2d=Rotation2d.fromRadians(gyroInputs.positionRad);
+    }
+
+    // Update odometry
+    updateOdometry(moduleInputs); 
 
     // Log measured states
     Logger.getInstance().recordOutput("SwerveModuleStates/Measured", measuredStates);
