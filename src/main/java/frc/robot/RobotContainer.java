@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.Mode;
+import frc.robot.commands.AutoDriveToPose;
 import frc.robot.commands.BasicAutoDrive;
 import frc.robot.commands.DriveWithJoysticks;
 import frc.robot.commands.SpinCommand;
@@ -61,6 +62,7 @@ public class RobotContainer {
   // OI objects
   private XboxController driverController = new XboxController(0);
   private XboxController operatorController = new XboxController(1);
+  private GenericHID keyboard = new GenericHID(2);
   private boolean isFieldRelative = true;
 
   // Choosers
@@ -221,11 +223,12 @@ public class RobotContainer {
         .and(new Trigger(driverController::getRightBumper))
         .onTrue(resetGyroCommand)
         .onTrue(rumbleCommand);
+    
+    Command driveToOrigin =
+        new AutoDriveToPose(drive, new Pose2d());
 
-    // Auto drive controls
-    // new Trigger(() -> driverController.getLeftTriggerAxis() > 0.5)
-    // .whileTrue(new AutoDriveHard(drive));
-
+    new Trigger(() -> keyboard.getRawButton(1))
+        .onTrue(driveToOrigin);
   }
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.

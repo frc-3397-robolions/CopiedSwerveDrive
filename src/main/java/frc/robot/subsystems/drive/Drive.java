@@ -25,6 +25,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Constants.RobotType;
 import frc.robot.util.GeomUtil;
 import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.PhotonCameraWrapper;
@@ -183,8 +184,7 @@ public class Drive extends SubsystemBase {
       }
     } else {
       switch (driveMode) {
-        //Run based on closedLoopSetpoint
-        case NORMAL:
+/*Run based on closedLoopSetpoint*/case NORMAL:
           // In normal mode, run the controllers for turning and driving based on the current
           // setpoint
           SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(closedLoopSetpoint);
@@ -240,7 +240,7 @@ public class Drive extends SubsystemBase {
           break;
  
           
-      /*Go to X Stance to stay in place*/  case X:
+/*Go to X Stance*/  case X:
           for (int i = 0; i < 4; i++) {
             Rotation2d targetRotation = GeomUtil.direction(getModuleTranslations()[i]);
             Rotation2d currentRotation = turnPositions[i];
@@ -256,19 +256,7 @@ public class Drive extends SubsystemBase {
       }
     }
 
-    // Update odometry
-    m_PoseEstimator.update(Rotation2d.fromRadians(gyroInputs.positionRad), new SwerveModulePosition[] {
-      moduleInputs[0].pos,
-      moduleInputs[1].pos,
-      moduleInputs[2].pos,
-      moduleInputs[3].pos
-    });
-    Optional<EstimatedRobotPose> result =
-                pcw.getEstimatedGlobalPose(m_PoseEstimator.getEstimatedPosition());
-    if(result.isPresent())
-    m_PoseEstimator.addVisionMeasurement(result.get().estimatedPose.toPose2d(), result.get().timestampSeconds);
-    odometryPose = m_PoseEstimator.getEstimatedPosition();
-    lastGyroPosRad = gyroInputs.positionRad;
+    
 
     // Update field velocity
     SwerveModuleState[] measuredStates = new SwerveModuleState[] {null, null, null, null};
@@ -279,6 +267,17 @@ public class Drive extends SubsystemBase {
     fieldVelocity =
         new Translation2d(chassisState.vxMetersPerSecond, chassisState.vyMetersPerSecond)
             .rotateBy(getRotation());
+    if(Constants.getRobot()==RobotType.ROBOT_SIMBOT){
+      //If in sim mode, make up gyro pos from chassis states
+      fieldVelocity = new Translation2d(chassisState.vxMetersPerSecond, chassisState.vyMetersPerSecond)
+                        .rotateBy(Rotation2d.fromRadians(chassisState.omegaRadiansPerSecond));
+      gyroInputs.velocityRadPerSec = chassisState.omegaRadiansPerSecond;
+      gyroInputs.positionRad+=chassisState.omegaRadiansPerSecond;
+      gyroInputs.rotation2d=Rotation2d.fromRadians(gyroInputs.positionRad);
+    }
+
+    // Update odometry
+    updateOdometry(moduleInputs); 
 
     // Log measured states
     Logger.getInstance().recordOutput("SwerveModuleStates/Measured", measuredStates);
@@ -339,6 +338,19 @@ public class Drive extends SubsystemBase {
         turnFeedback[i].setD(turnKd.get());
       }
     }
+  }
+  private void updateOdometry(ModuleIOInputsAutoLogged[] moduleInputs){
+    odometryPose=m_PoseEstimator.update(gyroInputs.rotation2d, new SwerveModulePosition[] {
+      moduleInputs[0].pos,
+      moduleInputs[1].pos,
+      moduleInputs[2].pos,
+      moduleInputs[3].pos
+    });
+    Optional<EstimatedRobotPose> result =
+                pcw.getEstimatedGlobalPose(m_PoseEstimator.getEstimatedPosition());
+    if(result.isPresent())
+      m_PoseEstimator.addVisionMeasurement(result.get().estimatedPose.toPose2d(), result.get().timestampSeconds);
+    lastGyroPosRad = gyroInputs.positionRad;
   }
 
   /** Stops the drive. */
