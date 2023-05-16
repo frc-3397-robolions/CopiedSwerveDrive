@@ -28,8 +28,8 @@ public class GeomUtil {
   /**
    * Creates a pure translating transform
    *
-   * @param x The x componenet of the translation
-   * @param y The y componenet of the translation
+   * @param x The x componenent of the translation
+   * @param y The y componenent of the translation
    * @return The resulting transform
    */
   public static Transform2d transformFromTranslation(double x, double y) {
