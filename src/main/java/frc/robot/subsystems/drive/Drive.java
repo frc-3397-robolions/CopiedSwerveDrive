@@ -95,7 +95,7 @@ public class Drive extends SubsystemBase {
     
     maxLinearSpeed = Units.feetToMeters(14.5);
     wheelRadius = Units.inchesToMeters(2.0);
-    trackWidthX = Units.inchesToMeters(25.0);
+    trackWidthX = Units.inchesToMeters(36.0);
     trackWidthY = Units.inchesToMeters(24.0);
 
     //Assign robot constants based on mode
@@ -360,6 +360,10 @@ public class Drive extends SubsystemBase {
 
   public void goToX() {
     driveMode = DriveMode.X;
+  }
+
+  public void goToNormal(){
+    driveMode = DriveMode.NORMAL;
   }
 
   /** Returns the maximum linear speed in meters per sec. */

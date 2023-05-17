@@ -31,7 +31,7 @@ public class ModuleIOSparkMAX implements ModuleIO {
   private final RelativeEncoder turnRelativeEncoder;
   private final CANCoder turnAbsoluteEncoder;
 
-  private final double driveAfterEncoderReduction = (50.0 / 14.0) * (17.0 / 27.0) * (45.0 / 15.0);
+  private final double driveAfterEncoderReduction = 8.14;
   private final double turnAfterEncoderReduction = 150.0 / 7.0;
 
   private final boolean isTurnMotorInverted = true;
@@ -43,7 +43,7 @@ public class ModuleIOSparkMAX implements ModuleIO {
       case ROBOT_2022S:
         switch (index) {
           case 0:
-            driveSparkMax = new CANSparkMax(1, MotorType.kBrushless);
+            driveSparkMax = new CANSparkMax(10, MotorType.kBrushless);
             turnSparkMax = new CANSparkMax(2, MotorType.kBrushless);
             turnAbsoluteEncoder = new CANCoder(23);
             absoluteEncoderOffset = Rotation2d.fromDegrees(34.5);
