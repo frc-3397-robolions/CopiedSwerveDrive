@@ -128,7 +128,6 @@ public class Drive extends SubsystemBase {
         turnKd.initDefault(0.0);
         break;
     }
-
     kinematics = new SwerveDriveKinematics(getModuleTranslations());
     driveFeedforward = new SimpleMotorFeedforward(driveKs.get(), driveKv.get());
     //Make unique PID controllers for each module. May or may not be neccesary

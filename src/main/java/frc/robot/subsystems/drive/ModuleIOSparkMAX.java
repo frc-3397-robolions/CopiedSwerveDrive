@@ -7,6 +7,7 @@
 
 package frc.robot.subsystems.drive;
 
+import com.ctre.phoenix.sensors.CANCoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
@@ -16,6 +17,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.CAN;
 import edu.wpi.first.wpilibj.RobotController;
 import frc.robot.Constants;
 import frc.robot.util.SparkMaxDerivedVelocityController;
@@ -27,7 +29,7 @@ public class ModuleIOSparkMAX implements ModuleIO {
   private final SparkMaxDerivedVelocityController driveDerivedVelocityController;
   private final RelativeEncoder driveDefaultEncoder;
   private final RelativeEncoder turnRelativeEncoder;
-  private final AnalogInput turnAbsoluteEncoder;
+  private final CANCoder turnAbsoluteEncoder;
 
   private final double driveAfterEncoderReduction = (50.0 / 14.0) * (17.0 / 27.0) * (45.0 / 15.0);
   private final double turnAfterEncoderReduction = 150.0 / 7.0;
@@ -41,28 +43,28 @@ public class ModuleIOSparkMAX implements ModuleIO {
       case ROBOT_2022S:
         switch (index) {
           case 0:
-            driveSparkMax = new CANSparkMax(15, MotorType.kBrushless);
-            turnSparkMax = new CANSparkMax(11, MotorType.kBrushless);
-            turnAbsoluteEncoder = new AnalogInput(0);
-            absoluteEncoderOffset = new Rotation2d(-0.036);
+            driveSparkMax = new CANSparkMax(1, MotorType.kBrushless);
+            turnSparkMax = new CANSparkMax(2, MotorType.kBrushless);
+            turnAbsoluteEncoder = new CANCoder(23);
+            absoluteEncoderOffset = Rotation2d.fromDegrees(34.5);
             break;
           case 1:
-            driveSparkMax = new CANSparkMax(12, MotorType.kBrushless);
-            turnSparkMax = new CANSparkMax(9, MotorType.kBrushless);
-            turnAbsoluteEncoder = new AnalogInput(1);
-            absoluteEncoderOffset = new Rotation2d(1.0185);
+            driveSparkMax = new CANSparkMax(3, MotorType.kBrushless);
+            turnSparkMax = new CANSparkMax(4, MotorType.kBrushless);
+            turnAbsoluteEncoder = new CANCoder(21);
+            absoluteEncoderOffset = Rotation2d.fromDegrees(192.65);
             break;
           case 2:
-            driveSparkMax = new CANSparkMax(14, MotorType.kBrushless);
-            turnSparkMax = new CANSparkMax(10, MotorType.kBrushless);
-            turnAbsoluteEncoder = new AnalogInput(2);
-            absoluteEncoderOffset = new Rotation2d(1.0705);
+            driveSparkMax = new CANSparkMax(5, MotorType.kBrushless);
+            turnSparkMax = new CANSparkMax(6, MotorType.kBrushless);
+            turnAbsoluteEncoder = new CANCoder(22);
+            absoluteEncoderOffset = Rotation2d.fromDegrees(254.4);
             break;
           case 3:
-            driveSparkMax = new CANSparkMax(13, MotorType.kBrushless);
+            driveSparkMax = new CANSparkMax(7, MotorType.kBrushless);
             turnSparkMax = new CANSparkMax(8, MotorType.kBrushless);
-            turnAbsoluteEncoder = new AnalogInput(3);
-            absoluteEncoderOffset = new Rotation2d(0.7465);
+            turnAbsoluteEncoder = new CANCoder(24);
+            absoluteEncoderOffset = Rotation2d.fromDegrees(159.2);
             break;
           default:
             throw new RuntimeException("Invalid module index for ModuleIOSparkMAX");
@@ -104,13 +106,8 @@ public class ModuleIOSparkMAX implements ModuleIO {
     inputs.driveCurrentAmps = new double[] {driveSparkMax.getOutputCurrent()};
     inputs.driveTempCelcius = new double[] {driveSparkMax.getMotorTemperature()};
 
-    double absolutePositionPercent =
-        turnAbsoluteEncoder.getVoltage() / RobotController.getVoltage5V();
-    if (isAbsoluteEncoderInverted) {
-      absolutePositionPercent = 1 - absolutePositionPercent;
-    }
     inputs.turnAbsolutePositionRad =
-        new Rotation2d(absolutePositionPercent * 2.0 * Math.PI)
+         Rotation2d.fromDegrees(turnAbsoluteEncoder.getAbsolutePosition() * 2.0 * Math.PI)
             .minus(absoluteEncoderOffset)
             .getRadians();
     inputs.turnPositionRad =
