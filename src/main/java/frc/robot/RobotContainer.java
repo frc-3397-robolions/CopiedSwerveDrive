@@ -161,7 +161,7 @@ public class RobotContainer {
     true, // Should the path be automatically mirrored depending on alliance color. Optional, defaults to true
     drive //The drive subsystem. Used to properly set the requirements of path following commands
   );
-    Command TwoCubeAutoLeft = autoBuilder.fullAuto(leftAuto);
+    Command TwoCubeAutoLeft = new InstantCommand(()->drive.setPose(leftAuto.get(0).getInitialHolonomicPose())).andThen(autoBuilder.fullAuto(leftAuto));
     autoChooser.addDefaultOption("TwoCubeAutoLeft", TwoCubeAutoLeft);
 
     Command TwoCubeAutoMid = autoBuilder.fullAuto(midAuto);
